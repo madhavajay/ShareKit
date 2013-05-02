@@ -57,4 +57,6 @@
 
 - (void)followMe;
 
+- (void)setShouldAutoShare:(BOOL)b;
+
 @end

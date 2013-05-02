@@ -124,7 +124,17 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 		if (allowLoginUI) [[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Logging In...")];
         
         [FBSession setActiveSession:session];
-        [session openWithBehavior:FBSessionLoginBehaviorUseSystemAccountIfPresent
+        
+        /*
+         typedef enum {
+         FBSessionLoginBehaviorWithFallbackToWebView = 0,
+         FBSessionLoginBehaviorWithNoFallbackToWebView = 1,
+         FBSessionLoginBehaviorForcingWebView = 2,
+         FBSessionLoginBehaviorUseSystemAccountIfPresent = 3,
+         } FBSessionLoginBehavior;
+         */
+        
+        [session openWithBehavior:FBSessionLoginBehaviorForcingWebView
 				completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
 					if (allowLoginUI) [[SHKActivityIndicator currentIndicator] hide];
 					[self sessionStateChanged:session state:state error:error];
@@ -172,15 +182,19 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
      object:session];
     
     if (error) {
-		[FBSession.activeSession closeAndClearTokenInformation];
-        UIAlertView *alertView = [[UIAlertView alloc]
-                                  initWithTitle:@"Error"
-                                  message:error.localizedDescription
-                                  delegate:nil
-                                  cancelButtonTitle:@"OK"
-                                  otherButtonTitles:nil];
-        [alertView show];
-        [alertView release];
+        if ([error.domain isEqualToString:@"com.facebook.sdk"] && error.code == 2) {
+            // no need to display error because user has simply closed the uiwebview login popup
+        } else {
+            [FBSession.activeSession closeAndClearTokenInformation];
+            UIAlertView *alertView = [[UIAlertView alloc]
+                                      initWithTitle:@"Error"
+                                      message:error.localizedDescription
+                                      delegate:nil
+                                      cancelButtonTitle:@"OK"
+                                      otherButtonTitles:nil];
+            [alertView show];
+            [alertView release];
+        }
     }
 	if (authingSHKFacebook == self) {
 		authingSHKFacebook = nil;
@@ -273,7 +287,7 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 
 - (BOOL)shouldAutoShare
 {
-	return NO;
+	return [[NSUserDefaults standardUserDefaults] boolForKey:[NSString stringWithFormat:@"%@_shouldAutoShare", [self sharerId]]];
 }
 
 #pragma mark -
@@ -746,6 +760,11 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
     }    
     
  	[self tryToSend];
-}  
+}
+
+- (void)setShouldAutoShare:(BOOL)b
+{
+	[[NSUserDefaults standardUserDefaults] setBool:b forKey:[NSString stringWithFormat:@"%@_shouldAutoShare", [self sharerId]]];
+}
 
 @end

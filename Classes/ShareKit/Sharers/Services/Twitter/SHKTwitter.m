@@ -624,6 +624,16 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	[oRequest release];
 }
 
+- (void)setShouldAutoShare:(BOOL)b
+{
+	[[NSUserDefaults standardUserDefaults] setBool:b forKey:[NSString stringWithFormat:@"%@_shouldAutoShare", [self sharerId]]];
+}
+
+- (BOOL)shouldAutoShare
+{
+	return [[NSUserDefaults standardUserDefaults] boolForKey:[NSString stringWithFormat:@"%@_shouldAutoShare", [self sharerId]]];
+}
+
 #pragma mark -
 
 - (void)handleUnsuccessfulTicket:(NSData *)data
